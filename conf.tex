@@ -1,0 +1,269 @@
+\documentclass[aspectratio=169]{beamer}
+\usepackage[utf8]{inputenc}
+\usepackage[russian]{babel}
+\usepackage[T2A]{fontenc}
+\usepackage{tempora} % Отличный Times-подобный шрифт с поддержкой кириллицы
+\usepackage{amsmath, amssymb}
+\usepackage{graphicx}
+\graphicspath{{images/}}
+
+
+% Настройки темы
+\usetheme{Madrid}
+\usecolortheme{whale}
+
+% Правила оформления согласно ТЗ
+\setbeamerfont{title}{size=\huge, series=\bfseries, family=\rmfamily}
+\setbeamerfont{frametitle}{size=\Large, series=\bfseries, family=\rmfamily}
+\setbeamerfont{normal text}{size=\large, family=\rmfamily}
+\usefonttheme{serif}
+
+\title[Решение задач релаксации]{Разработка программных солверов на суперкомпьютерных системах для
+решения кинетического уравнения в задачах релаксации}
+\author[Володин М.В.]{Докладчик: Володин Максим \\
+Б02-206к \\
+Физтех-школа физики и исследований имени Ландау}
+\institute[МФТИ]{Московский физико-технический институт}
+\date{02.IV.2026}
+
+\begin{document}
+
+% Слайд 1: Титульный
+    \begin{frame}
+        \titlepage
+    \end{frame}
+
+% Слайд 2: Постановка проблемы
+    \begin{frame}{Постановка проблемы}
+        \begin{itemize}
+            \item \textbf{Объект исследования:} уравнение Больцмана для функции распределения~~$f(t, x, \dot{x})$
+            \item \textbf{Сложность:} нелинейный интеграл столкновений высокой кратности.
+            \item \textbf{Актуальность:} необходимость точного моделирования разреженных газов в гиперзвуковой
+            аэродинамике и вакуумной технике.
+        \end{itemize}
+    \end{frame}
+    
+    \begin{frame}{Обзор известных подходов}
+        \textbf{Проблема:} нарушение законов сохранения при использовании стандартных методов
+        \begin{itemize}
+            \item DSMC (\textbf{метод Бёрда}) страдает от статистического шума вблизи равновесия
+            \item Метод дискретных скоростей (\textbf{Бродвелл, Кабанн}) разрешает столкновения, идеально попадающие
+            в узлы сетки (большинство реальных столкновений запрещено).
+            \item Методы с интерполяцией (\textbf{Аристов}): разрешаются все столкновения и интерполируют функцию.
+            Не сохраняют энергию и импульс (появляются \("\)паразитные\("\) источники).
+        \end{itemize}
+    
+    \end{frame}
+
+% Слайд 3: Новизна и актуальность
+    \begin{frame}{Новизна: консервативный проекционный метод}
+        \begin{itemize}
+            \item Впервые предложен \textbf{Ф. Г. Черемисиным}.
+            \item \textbf{Эффективность:} отказ от статистических методов в пользу строгого счёта.
+            \item \textbf{Ключевая идея:} интеграл столкновений представляется как проекция функционала на узлы
+            скоростной сетки.
+            \item \textbf{Преимущество:} строгое выполнение законов сохранения на уровне разностной схемы.
+        \end{itemize}
+    \end{frame}
+
+% Слайд 4: Цели и задачи
+    \begin{frame}{Цели и задачи работы}
+        \textbf{Цель:} моделирование процессов релаксации однокомпонентного газа и смеси методом Черемисина.
+        \vfill
+        \textbf{Задачи:}
+        \begin{enumerate}
+            \item Реализация общей численной схемы для задачи релаксации.
+            \item Расчёт эволюции анизотропного распределения (модель \textbf{квази-шок}).
+            \item Анализ выравнивания температур в смеси «горячего» и «холодного» газов.
+            \item Контроль макропараметров и H-функции Больцмана (\textbf{второе начало}) в частности.
+        \end{enumerate}
+    \end{frame}
+    
+    \begin{frame}{Обезразмеривание и сетка скоростей}
+        Равновесное максвелловское распределение:
+        \[\tilde{f_M} = n_i \left(\frac{m_i}{2\pi k_B T_i} \right)^{3/2}~\exp \left(-\frac{m_i v^2}{2 k_B T_i}\right) \]
+        
+        Переход к безразмерным переменным:
+        \begin{gather*}
+            \xi_{sq} = \sqrt{\frac{k T_0}{m}}, \quad \lambda = \frac{1}{\sqrt{2}\pi n_0 d^2}, \quad f =
+            \frac{\tilde{f}}{n_0 \xi_{sq}^3} \\
+            \tau_\lambda = \frac{\lambda}{\xi_{sq}}, \quad t = \frac{\tilde{t}}{\tau_\lambda}, \quad \xi =
+            \frac{v}{\xi_{sq}}
+        \end{gather*}
+        
+        В пространстве скоростей вводится сетка, ограниченная \textbf{эллипсоидом обрезания} $\xi_{cut} = 4.8$:
+        \begin{gather*}
+            \xi_{\alpha_i} = -\xi_{cut} + (\alpha_i - 0.5)\Delta \xi_i, \quad \alpha_i = 1, \dots, N_{\xi_i} \\
+            \Delta \xi_i = \frac{2\xi_{cut}}{N_{\xi_i}}, \quad \Delta V = \Delta \xi_x \Delta \xi_y \Delta \xi_z \\
+        \end{gather*}
+    \end{frame}
+
+% Слайд 5: Математическая модель
+    \begin{frame}{Интеграл столкновений}
+        Уравнение релаксации
+        \[ \frac{df}{dt} = I(f_*, f) \]
+        Используется модель \textbf{твёрдых сфер} ($b_{\max} = d$). \\
+        Интеграл столкновений
+        \[ I(\xi) = \int_0^d \int_0^{2 \pi} \int_{-\xi_{cut}}^{+\xi_{cut}} (f' f'_* - f f_*) g b \, db \, d\epsilon \, d\xi_* \]
+    \end{frame}
+
+% Слайд 6: Метод решения: Проекционная схема
+    \begin{frame}{Дискретизация и проекция}
+        Схема непрерывного счёта (аналог метода \textbf{Гаусса-Зейделя}) с увеличенным шагом:
+        \[ f_\gamma^{n+1} = f_\gamma^n + t \delta I_\gamma^{(n)} \]
+        Вклад каждого столкновения в точке $\gamma$ проецируется на ближайшие узлы $\lambda, \mu$ с весом:
+        \begin{multline*}
+            \delta I_\gamma^{(n)} = \frac{b^2_{\max} V_{sph}}{4\sqrt{2}} \frac{N_0}{N_\nu} \Big[ \delta_{\alpha_{\nu,
+            \gamma}} + \delta_{\beta_{\nu, \gamma}} - (1 - r_\nu) \big( \delta_{\lambda_{\nu, \gamma}} +
+            \delta_{\mu_{\nu, \gamma}} \big)- r_\nu \big( \delta_{\lambda_\nu + s_\nu, \gamma} + \delta_{\mu_\nu -
+            s_\nu, \gamma} \big) \Big] \Omega_\nu
+        \end{multline*}
+        
+        Разность \textbf{обратного и прямого} потоков:
+        \begin{equation*}
+            \Omega_\nu = \Big[ \big(~f_{\lambda_\nu}^{(\nu)} f_{\mu_\nu}^{(\nu)} \big)^{1 - r_\nu}
+            \big(~f_{\lambda_\nu + s_\nu}^{(\nu)}~f_{\mu_\nu - s_\nu}^{(\nu)} \big)^{r_\nu} - f_{\alpha_\nu}^{(\nu)}
+            f_{\beta_\nu}^{(\nu)} \Big] \Big| \xi_{\alpha_\nu} - \xi_{\beta_\nu} \Big|
+        \end{equation*}
+    \end{frame}
+
+% Слайд 7: Численное интегрирование: Сетки Коробова
+    \begin{frame}{Кубатурные сетки Коробова}
+        Для вычисления интеграла используются \textbf{теоретико-числовые сетки Коробова}:
+        \[ \mathbf{x}_k = \left\{ \frac{a_1 k}{p}, \frac{a_2 k}{p}, \dots, \frac{a_s k}{p} \right\}, \quad k=1, \dots, p \]
+        \begin{itemize}
+            \item $p$ — простое число (количество узлов).
+            \item Высокая точность для многомерного интегрирования за счёт перетасовки узлов
+            \item Погрешность ниже, чем в методе Монте-Карло ($\frac{1}{N}$ против $\frac{1}{\sqrt{N}}$).
+        \end{itemize}
+    \end{frame}
+
+% Слайд 8: Задача 1: Релаксация анизотропного распределения
+    \begin{frame}{Задача 1. Квази-шок}
+        \[ f_0 = \frac{0.5}{(2\pi)^{1.5}} \left[ \exp\left(-\frac{(\xi_x - u)^2 + \xi_y^2 + \xi_z^2}{2}\right) +
+                                              \exp\left(-\frac{(\xi_x + u)^2 + \xi_y^2 + \xi_z^2}{2}\right) \right] \]
+        \begin{itemize}
+            \item Параметр $u$.
+            \item Физический смысл: два встречных потока газа.
+            \item Ожидаемый эффект: перекачка энергии из продольной компоненты тензора температуры $T_{xx}$ в
+            поперечные до состояния изотропии.
+        \end{itemize}
+    \end{frame}
+
+% Слайд 10: Результаты задачи 1
+    \begin{frame}{Эволюция температуры задачи 1}
+        \begin{figure}
+            \includegraphics[width=0.7\textwidth]{t10}
+%            \caption{}
+            \label{fig:t10}
+        \end{figure}
+    \end{frame}
+    
+    \begin{frame}{Эволюция $H$-функции задачи 1}
+        \begin{figure}
+            \includegraphics[width=0.7\textwidth]{h10}
+%            \caption{}
+            \label{fig:h10}
+        \end{figure}
+    \end{frame}
+
+% Слайд 9: Результаты задачи 1: Температуры
+    \begin{frame}{Результаты задачи 1}
+        \textbf{Температурные зависимости}
+        \begin{itemize}
+            \item $T_{xx}$~уменьшается; $T_{yy}, T_{zz}$ растут.
+            При $t \to \infty$: $T_{xx} = T_{yy} = T_{zz} = T$.
+        \end{itemize}
+        
+        \textbf{Эволюция H-функции Больцмана}
+        \[ H = \int_{-\xi_{cut}}^{+\xi_{cut}} f(\xi) \ln f(\xi) \, d\xi \]
+        \begin{itemize}
+            \item Согласно H-теореме, $dH/dt \le 0$ -- монотонное невозрастание с минимумом в равновесии
+            \item Скорость убывания коррелирует с величиной $u$.
+        \end{itemize}
+    
+    \end{frame}
+
+% Слайд 11: Задача 2: Релаксация смеси газов
+    \begin{frame}{Задача 2: cмесь «горячего» и «холодного» газов}
+        \textbf{Начальное состояние:}
+        \[ f_0 = f_M(T=1) + f_M(T=2) \]
+        \vfill
+        \textbf{Ожидаемые результаты}
+        \begin{itemize}
+            \item \textit{Парциальные температуры:} $T_{cold}$ и $T_{hot}$ стремятся к общему значению $T_{mix}$.
+            \item \textit{Энтропия:} суммарная для системы возрастает.
+            \item \textit{Концентрации:} $n_{cold}, n_{hot}$ сохраняются (контроль работы метода).
+        \end{itemize}
+    \end{frame}
+    
+    \begin{frame}{Эволюция температур задачи 2}
+        \begin{figure}
+            \includegraphics[width=0.7\textwidth]{t2}
+%            \caption{}
+            \label{fig:t2}
+        \end{figure}
+    \end{frame}
+    
+    \begin{frame}{Эволюция энтропий задачи 2}
+        \begin{figure}
+            \includegraphics[width=0.7\textwidth]{s}
+%            \caption{}
+            \label{fig:s}
+        \end{figure}
+    \end{frame}
+% Слайд 12: Результаты задачи 2: Выравнивание температур
+    \begin{frame}{Результаты задачи 2}
+        \textbf{Эволюция температур}
+        \begin{itemize}
+            \item Уменьшение скорости релаксации в ходе эволюции
+            \item Итоговая температура $T = \frac{\sum_i n_i T_i}{\sum_i n_i}$.
+        \end{itemize}
+        
+        \textbf{Эволюция энтропий}
+        \begin{itemize}
+            \item Энтропии холодного газа и смеси растёт
+            \item Энтропия горячего газа падает
+        \end{itemize}
+    \end{frame}
+
+% Слайд 13: Результаты задачи 2: Выравнивание
+
+
+% Слайд 14: Заключение
+    \begin{frame}{Заключение}
+        \begin{enumerate}
+            \item Успешно применён \textbf{консервативный проекционный метод} для задач релаксации.
+            \item Подтверждено \textbf{строгое выполнение} законов сохранения массы, импульса и энергии.
+            \item Показано выполнение \textbf{второго начала} в дискретном пространстве скоростей.
+            \item Использование \textbf{сеток Коробова} позволило эффективно вычислить интеграл столкновений при
+            умеренном числе узлов.
+        \end{enumerate}
+    \end{frame}
+
+% Слайд 16: Список литературы
+    \begin{frame}{Список литературы}
+        \begin{thebibliography}{9}
+            \bibitem{LL10}
+            \textit{Лифшиц Е.М., Питаевский Л. П.} Физическая кинетика М.: Наука.~Гл.~ред.~физ.-мат.~лит., 1979.- 528
+            страниц (том X)
+            
+            \bibitem{dyn}
+            \textit{Коган М. Н.} Динамика разреженного газа.~— М.: Наука, 1967
+            
+            \bibitem{Tcher}
+            \textit{Черемисин Ф. Г.} Введение в консервативный проекционный метод вычисления интеграла столкновений и
+            метод решения уравнения Больцмана: учебное пособие.~– М.: МФТИ.~– 2015.~– 80 с
+        \end{thebibliography}
+        \vspace{5mm}
+        Работа была выполнена с использованием оборудования центра коллективного пользования «Комплекс моделирования и
+        обработки данных исследовательских установок мега-класса» НИЦ «Курчатовский институт», http://ckp.nrcki.ru/
+    \end{frame}
+
+% Слайд 17: Спасибо за внимание
+    \begin{frame}[plain]
+    \centering
+    \Huge \textbf{Спасибо за внимание!}
+    \end{frame}
+
+\end{document}

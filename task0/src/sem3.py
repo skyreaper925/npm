@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 import math
-import numpy as np
-import random
 from sem2 import *
 
 def eratosthenes_sieve(n):
@@ -17,7 +15,7 @@ def eratosthenes_sieve(n):
 
 def H(z, p, s=5):
     """Compute H(z) function for Korobov grid coefficients (Eq. 3.35)."""
-    total = 0.0
+    total = .0
     for k in range(1, (p - 1) // 2 + 1):
         product = 1.0
         for i in range(1, s + 1):
@@ -146,51 +144,54 @@ def compute_collision_integral(f, xi_grid, dxi, xi_cut, tau, b_max=1.0, return_s
     V_sph = (4 / 3) * np.pi * xi_cut**3
     N_0 = int(round(V_sph / volume))
 
+    # 8-мерная сетка Коробова (Пособие, стр. 26, Таблица 1, p = 50021).
+    # Шесть скоростных компонент (обе частицы) + b² + ε — все 8 параметров
+    # столкновения берутся из одной квадратурной сетки. 8-мерные
+    # сетки Коробова дают лучшую оценку погрешности, чем гибрид Коробов+MC».
     p = 50021
-    a = [1, 11281, 7537, 39218, 32534]
+    a = [1, 11281, 7537, 39218, 32534, 11977, 5816, 32765]
     # Константа перед суммой по схеме (3.22)
 
     C = (b_max**2 * V_sph * N_0) / (4 * np.sqrt(2) * p) * tau
 
-    shift = np.random.rand(5)
+    shift = np.random.rand(8)
 
     f_new = f.copy()
     n_pos_skipped = 0  # счётчик пропусков по условию положительности (для контроля шага tau)
 
     for i in range(1, p + 1):
-        # Генерируем 5-мерную точку сетки
-        u1 = ((i * a[0]) % p) / p + shift[0]
-        u2 = ((i * a[1]) % p) / p + shift[1]
-        u3 = ((i * a[2]) % p) / p + shift[2]
-        u4 = ((i * a[3]) % p) / p + shift[3]
-        u5 = ((i * a[4]) % p) / p + shift[4]
-
-        u1 = u1 - int(u1)
-        u2 = u2 - int(u2)
-        u3 = u3 - int(u3)
-        u4 = u4 - int(u4)
-        u5 = u5 - int(u5)
+        # Генерируем 8-мерную точку сетки Коробова
+        u = [(((i * a[j]) % p) / p + shift[j]) for j in range(8)]
+        u = [v - int(v) for v in u]
+        u1, u2, u3, u4, u5, u6, u7, u8 = u
 
         epsilon = u1 * 2 * np.pi
         S_b = u2 * (b_max ** 2)
-        v1x = u3 * 2 * xi_cut - xi_cut
-        v1y = u4 * 2 * xi_cut - xi_cut
-        v1z = u5 * 2 * xi_cut - xi_cut
+        # Первая скорость (узел α)
+        v0x = u3 * 2 * xi_cut - xi_cut
+        v0y = u4 * 2 * xi_cut - xi_cut
+        v0z = u5 * 2 * xi_cut - xi_cut
+        if v0x**2 + v0y**2 + v0z**2 > xi_cut**2: continue
+        alpha_idx = (
+            max(0, min(N - 1, int(np.floor((v0x - xi_grid[0][0]) / dxi[0] + 0.5)))),
+            max(0, min(N - 1, int(np.floor((v0y - xi_grid[1][0]) / dxi[1] + 0.5)))),
+            max(0, min(N - 1, int(np.floor((v0z - xi_grid[2][0]) / dxi[2] + 0.5))))
+        )
+        v_ax, v_ay, v_az = xi_grid[0][alpha_idx[0]], xi_grid[1][alpha_idx[1]], xi_grid[2][alpha_idx[2]]
+        if v_ax**2 + v_ay**2 + v_az**2 > xi_cut**2: continue
 
+        # Вторая скорость (узел β)
+        v1x = u6 * 2 * xi_cut - xi_cut
+        v1y = u7 * 2 * xi_cut - xi_cut
+        v1z = u8 * 2 * xi_cut - xi_cut
         if v1x**2 + v1y**2 + v1z**2 > xi_cut**2: continue
-
         beta_idx = (
             max(0, min(N - 1, int(np.floor((v1x - xi_grid[0][0]) / dxi[0] + 0.5)))),
             max(0, min(N - 1, int(np.floor((v1y - xi_grid[1][0]) / dxi[1] + 0.5)))),
             max(0, min(N - 1, int(np.floor((v1z - xi_grid[2][0]) / dxi[2] + 0.5))))
         )
-
         v_bx, v_by, v_bz = xi_grid[0][beta_idx[0]], xi_grid[1][beta_idx[1]], xi_grid[2][beta_idx[2]]
         if v_bx**2 + v_by**2 + v_bz**2 > xi_cut**2: continue
-
-        alpha_idx = (random.randint(0, N - 1), random.randint(0, N - 1), random.randint(0, N - 1))
-        v_ax, v_ay, v_az = xi_grid[0][alpha_idx[0]], xi_grid[1][alpha_idx[1]], xi_grid[2][alpha_idx[2]]
-        if v_ax**2 + v_ay**2 + v_az**2 > xi_cut**2: continue
 
         gx, gy, gz = v_bx - v_ax, v_by - v_ay, v_bz - v_az
         g_norm_sq = gx**2 + gy**2 + gz**2
@@ -256,7 +257,7 @@ def compute_collision_integral(f, xi_grid, dxi, xi_cut, tau, b_max=1.0, return_s
 
 def symmetrize_yz(f):
     """Симметризация f по поперечным компонентам ξ_y, ξ_z.
-    Бимодальное НУ и оператор столкновений сохраняют симметрию по этим осям;
+    НУ и оператор столкновений сохраняют симметрию по этим осям;
     стохастика метода Коробова её нарушает на уровне ~1/sqrt(p)."""
     f = 0.5 * (f + f[:, ::-1, :])
     f = 0.5 * (f + f[:, :, ::-1])

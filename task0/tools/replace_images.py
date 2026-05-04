@@ -71,7 +71,7 @@ IMAGE_MAP = {
     "word/media/image8.png": "f_xy_u15.png",
 }
 
-# === Маркер автоблока в конце документа ===================================
+# === Маркер блока в конце документа ===================================
 AUTO_BLOCK_MARKER = "[АВТО-ВСТАВКА: расчётные значения]"
 
 
@@ -134,7 +134,7 @@ def add_auto_block(dst_path, summary, skip_data):
 
     doc = Document(str(dst_path))
     body = doc.element.body
-    ns = "{http://schemas.openxmlformats.org/wordprocessingml/2006/main}"
+    ns = "{schemas.openxmlformats.org/wordprocessingml/2006/main}"
 
     # Идём по прямым детям body (sectPr должен остаться последним) и ищем
     # параграф с маркером. После него всё удаляем — это наш авто-блок.
@@ -209,7 +209,7 @@ def add_auto_block(dst_path, summary, skip_data):
                 m, s_ = divmod(int(elapsed), 60)
                 h, m = divmod(m, 60)
                 # row[8].text = f"{h}ч {m}м {s_}с" if h else f"{m}м {s_}с"
-                row[8].text = f"{h}ч {m}м" if h else f"{m}м"
+                row[8].text = f"{h}ч {m}м" if h else f"{m}м" if m >= 20 else f"{m}м {s_}с" if m else f"{s_}с"
             else:
                 row[8].text = "—"
 

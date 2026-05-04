@@ -34,7 +34,8 @@ LAST_JOB_FILE = TASK_ROOT / "tools" / ".last_jobid"
 
 # === Кластер ===============================================================
 HOST = "kiae"                              # из ~/.ssh/config
-REMOTE_DIR = "task0"                       # относительно $HOME на кластере
+REMOTE_DIR       = "task0"                 # рабочий каталог: submit, sbatch, логи
+REMOTE_FETCH_DIR = "data"                  # туда SLURM-скрипт переносит результаты (mv 05.* … ../data/) оттуда забираем
 SLURM_FILE = "relax.slurm"                 # имя SLURM-скрипта на кластере (уже там)
 
 # Локальные файлы кода, которые надо синхронизировать перед запуском.
@@ -147,10 +148,10 @@ def cmd_log(args):
 # === fetch =================================================================
 def cmd_fetch(_args):
     DATA_DIR.mkdir(parents=True, exist_ok=True)
-    print(f"==> Скачиваю {len(RESULT_FILES)} файлов в {DATA_DIR}/")
+    print(f"==> Скачиваю {len(RESULT_FILES)} файлов в {DATA_DIR}/ (из ~/{REMOTE_FETCH_DIR}/)")
     failed = []
     for fn in RESULT_FILES:
-        r = scp_from(f"{REMOTE_DIR}/{fn}", DATA_DIR / fn)
+        r = scp_from(f"{REMOTE_FETCH_DIR}/{fn}", DATA_DIR / fn)
         if r.returncode == 0:
             print(f"  [OK]   {fn}")
         else:
@@ -176,7 +177,7 @@ def main():
 
     p_log = sub.add_parser("log", help="последние строки output-логов на кластере")
     p_log.add_argument("jobid", nargs="?", default=None)
-    p_log.add_argument("-n", "--lines", type=int, default=10)
+    p_log.add_argument("-n", "--lines", type=int, default=1)
 
     sub.add_parser("fetch", help="скачать результаты в data/")
 

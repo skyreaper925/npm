@@ -40,9 +40,8 @@ def run(u_velocity, out_dir, seed=42):
     np.random.seed(seed)
 
     out_dir = Path(out_dir)
-    # Папку НЕ создаём: на кластере SLURM-job это запрещено, и проверено,
-    # что заранее созданная папка тоже не помогает. Поэтому ожидаем, что
-    # out_dir уже существует (для CWD это всегда так).
+    # Папку НЕ создаём: на кластере SLURM-job это запрещено, и проверено, что заранее созданная папка тоже не помогает.
+    # Поэтому ожидаем, что out_dir уже существует (для CWD это всегда так).
 
     tag = f"{int(round(u_velocity * 10)):02d}"
     f, xi_grid, dxi = initialize_distribution(N, xi_cut, u=u_velocity)

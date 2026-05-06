@@ -61,14 +61,15 @@ def find_data_dir(override=None):
 # === Соответствие image{N}.png в docx → файл из data/img/ =================
 # Если порядок в твоём отчёте другой — отредактируй словарь ниже.
 IMAGE_MAP = {
-    "word/media/image1.png": "Txx_combined.png",
-    "word/media/image2.png": "H_combined.png",
-    "word/media/image3.png": "T_combined.png",
-    "word/media/image4.png": "anisotropy_log.png",
-    "word/media/image5.png": "f_marginal_evolution.png",
-    "word/media/image6.png": "f_xy_u05.png",
-    "word/media/image7.png": "f_xy_u10.png",
-    "word/media/image8.png": "f_xy_u15.png",
+    "word/media/image2.png": "Txx_combined.png",
+    "word/media/image3.png": "H_combined.png",
+    "word/media/image4.png": "T_combined.png",
+    "word/media/image5.png": "anisotropy_log.png",
+    "word/media/image6.png": "f_marginal_evolution.png",
+    "word/media/image7.png": "f_xy_u05.png",
+    "word/media/image8.png": "f_xy_u10.png",
+    "word/media/image9.png": "f_xy_u15.png",
+    "word/media/image1.png": "m4_evolution.png",
 }
 
 # === Маркер блока в конце документа ===================================
@@ -134,7 +135,7 @@ def add_auto_block(dst_path, summary, skip_data):
 
     doc = Document(str(dst_path))
     body = doc.element.body
-    ns = "{schemas.openxmlformats.org/wordprocessingml/2006/main}"
+    ns = "{http://schemas.openxmlformats.org/wordprocessingml/2006/main}"
 
     # Идём по прямым детям body (sectPr должен остаться последним) и ищем
     # параграф с маркером. После него всё удаляем — это наш авто-блок.
@@ -246,12 +247,12 @@ def main():
         with zipfile.ZipFile(SRC, "r") as zin:
             zin.extractall(td)
         replace_images(td)
-        with zipfile.ZipFile(DST, "w", zipfile.ZIP_DEFLATED) as zout:
+        with zipfile.ZipFile(DST, "w", zipfile.ZIP_DEFLATED) as out:
             for root, _, files in os.walk(td):
                 for fn in files:
                     full = os.path.join(root, fn)
                     rel = os.path.relpath(full, td).replace("\\", "/")
-                    zout.write(full, rel)
+                    out.write(full, rel)
 
     # Шаг 2: добавить авто-блок с числами (через python-docx)
     add_auto_block(DST, summary, skip_data)

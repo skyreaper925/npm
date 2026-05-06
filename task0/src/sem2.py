@@ -158,7 +158,7 @@ def find_interpolating_nodes_and_weights(a_updated, xi_grid, dxi, xi_cut):
     Возвращает:
     lam1 lam2       mu1  mu2
     λ_ν, λ_ν + s_ν, μ_ν, μ_ν - s_ν : indices of grid nodes
-    r       : np.ndarray, shape (n,)
+    r       : np.ndarray
         Коэффициенты интерполяции.
     """
     # А) ищем ближайшие узлы для  xi_p и xi1_p и отсеиваем те которые не попадают в сферу радиуса xi_cut

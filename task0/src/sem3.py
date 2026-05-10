@@ -150,9 +150,16 @@ def compute_collision_integral(f, xi_grid, dxi, xi_cut, tau, b_max=1.0, return_s
     # сетки Коробова дают лучшую оценку погрешности, чем гибрид Коробов+MC».
     p = 50021
     a = [1, 11281, 7537, 39218, 32534, 11977, 5816, 32765]
-    # Константа перед суммой по схеме (3.22)
 
-    C = (b_max**2 * V_sph * N_0) / (4 * np.sqrt(2) * p) * tau
+    # Константа перед суммой по схеме (3.22), формула (3.26) Пособия (стр. 22).
+    # Знаменатель — N_ν, число точек 8-мерной сетки Коробова, у которых обе
+    # скорости попадают в сферу обрезания. Аналитическая оценка:
+    #   N_ν ≈ p · (V_sph / V_cube)² = p · (π/6)² ≈ 13700  (для p=50021).
+    # Это **не p**: ранее в коде ошибочно стояло p в знаменателе, что давало
+    # коэффициент в (π/6)² ≈ 0.274 раза меньше нужного и замедляло релаксацию
+    # в ~3.6 раза.
+    N_v = int(round(p * (np.pi / 6) ** 2))
+    C = (b_max**2 * V_sph * N_0) / (4 * np.sqrt(2) * N_v) * tau
 
     shift = np.random.rand(8)
 
@@ -242,13 +249,42 @@ def compute_collision_integral(f, xi_grid, dxi, xi_cut, tau, b_max=1.0, return_s
             n_pos_skipped += 1
             continue
 
-        # Непрерывное обновление внутри цикла
-        f_new[alpha_idx] += delta
-        f_new[beta_idx]  += delta
-        f_new[idx_l]     -= (1 - r_v) * delta
-        f_new[idx_ls]    -= r_v * delta
-        f_new[idx_m]     -= (1 - r_v) * delta
-        f_new[idx_ms]    -= r_v * delta
+        # === Учёт симметрии ф.р. по всем 3 осям (Пособие, стр. 36-37) ===
+        # Пространственно-однородная задача: f симметрична по ξ_x, ξ_y, ξ_z.
+        # В методе Коробова разыгрываются скорости из всего куба, и каждое
+        # столкновение «рассказывает» сразу про 8 эквивалентных событий —
+        # с любой комбинацией знаков компонент скорости. Поэтому, чтобы
+        # не учесть один и тот же физический вклад в 8 раз, делим delta на 8.
+        # И каждый из шести узлов столкновения обновляется в каждой из 8
+        # симметричных копий.
+        d8 = delta / 8.0
+        for sx in (1, -1):
+            ix_a = alpha_idx[0] if sx == 1 else (N - 1 - alpha_idx[0])
+            ix_b = beta_idx[0]  if sx == 1 else (N - 1 - beta_idx[0])
+            ix_l = idx_l[0]     if sx == 1 else (N - 1 - idx_l[0])
+            ix_ls= idx_ls[0]    if sx == 1 else (N - 1 - idx_ls[0])
+            ix_m = idx_m[0]     if sx == 1 else (N - 1 - idx_m[0])
+            ix_ms= idx_ms[0]    if sx == 1 else (N - 1 - idx_ms[0])
+            for sy in (1, -1):
+                iy_a = alpha_idx[1] if sy == 1 else (N - 1 - alpha_idx[1])
+                iy_b = beta_idx[1]  if sy == 1 else (N - 1 - beta_idx[1])
+                iy_l = idx_l[1]     if sy == 1 else (N - 1 - idx_l[1])
+                iy_ls= idx_ls[1]    if sy == 1 else (N - 1 - idx_ls[1])
+                iy_m = idx_m[1]     if sy == 1 else (N - 1 - idx_m[1])
+                iy_ms= idx_ms[1]    if sy == 1 else (N - 1 - idx_ms[1])
+                for sz in (1, -1):
+                    iz_a = alpha_idx[2] if sz == 1 else (N - 1 - alpha_idx[2])
+                    iz_b = beta_idx[2]  if sz == 1 else (N - 1 - beta_idx[2])
+                    iz_l = idx_l[2]     if sz == 1 else (N - 1 - idx_l[2])
+                    iz_ls= idx_ls[2]    if sz == 1 else (N - 1 - idx_ls[2])
+                    iz_m = idx_m[2]     if sz == 1 else (N - 1 - idx_m[2])
+                    iz_ms= idx_ms[2]    if sz == 1 else (N - 1 - idx_ms[2])
+                    f_new[ix_a, iy_a, iz_a] += d8
+                    f_new[ix_b, iy_b, iz_b] += d8
+                    f_new[ix_l, iy_l, iz_l] -= (1 - r_v) * d8
+                    f_new[ix_ls,iy_ls,iz_ls]-= r_v * d8
+                    f_new[ix_m, iy_m, iz_m] -= (1 - r_v) * d8
+                    f_new[ix_ms,iy_ms,iz_ms]-= r_v * d8
 
     if return_stats:
         return f_new, n_pos_skipped, p
@@ -316,54 +352,3 @@ def compute_macro_parameters(f, xi_grid, dxi):
     H_val = np.sum(f[mask] * np.log(f[mask])) * volume
 
     return T, T_xx, H_val
-
-
-def newton_method(xi_grid, dxi, u_guess, T_guess):
-    """Find u*, T* for Maxwellian distribution using Newton's method."""
-
-    def compute_y(u_star, T_star):
-        volume = dxi[0] * dxi[1] * dxi[2]
-        f_M = np.exp(-0.5 * np.sum((xi_grid - u_star) ** 2, axis=0) / T_star)
-        norm = np.sum(f_M) * volume
-        f_M /= norm
-        xi_mean = np.sum(f_M * xi_grid) * volume
-        xi_sq_mean = np.sum(f_M * np.sum(np.array(xi_grid) ** 2, axis=0) * volume)
-        y1 = (xi_sq_mean - u_star[0] ** 2) / 3 - T_guess
-        y2 = xi_mean - u_guess[0]
-        return y1, y2
-
-    N = xi_grid.shape[1]
-    u_star = np.zeros((3, N))
-    u_star[0][0] = u_guess[0]
-    T_star = T_guess
-    for _ in range(10):
-        y1, y2 = compute_y(u_star, T_star)
-        if abs(y1).all() < 1e-6 and abs(y2) < 1e-6:
-            break
-        # Compute partial derivatives numerically
-        eps = 1e-6
-        y1_u, y2_u = compute_y(u_star[0] + eps, T_star)
-        y1_T, y2_T = compute_y(u_star, T_star + eps)
-        dy1_du = (y1_u - y1) / eps
-        dy1_dT = (y1_T - y1) / eps
-        dy2_du = (y2_u - y2) / eps
-        dy2_dT = (y2_T - y2) / eps
-        J = np.array([[dy1_dT[0], dy1_du[0]], [dy2_dT, dy2_du]])
-        delta = np.linalg.solve(J, [-y1[0], -y2])
-        T_star += delta[0]
-        u_star[0] += delta[1]
-    return u_star, T_star
-
-
-def compute_norms(f, f_M, xi_grid, dxi, xi_cut):
-    """Compute differentiated norms (Eq. 3.38)."""
-    norms = []
-    volume = dxi[0] * dxi[1] * dxi[2]
-    for k in range(1, 4):
-        mask = ((k - 1) * xi_cut / 3 <= np.sqrt(xi_grid[k-1] ** 2)) & \
-               (np.sqrt(xi_grid[k-1] ** 2) <= k * xi_cut / 3)
-
-        #print(f[k-1] - f_M[k-1], "\n")
-        norm = np.sqrt((f[k-1] - f_M[k-1]) ** 2 * mask) * volume
-        norms.append(norm)
-    return norms

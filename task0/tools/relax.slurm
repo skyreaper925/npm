@@ -11,7 +11,9 @@
 # relax.py itself writes .out / .npz / .skip to ../data/ regarding its location.
 
 module load anaconda3/default
+# shellcheck disable=SC3030
 US=(0.5 1.0 1.5)
+# shellcheck disable=SC3054
 U=${US[$SLURM_ARRAY_TASK_ID]}
 
-/s/ls4/users/volodin_mv/env_opt/bin/python -u relax.py --u $U
+/s/ls4/users/volodin_mv/env_opt/bin/python -u relax.py --u "$U"

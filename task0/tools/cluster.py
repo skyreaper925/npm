@@ -3,10 +3,9 @@
 
 Подкоманды:
     submit              — синхронизирует src/*.py на сервер, sbatch, печатает JOBID
-    status [JOBID]      — squeue + sacct, показывает Elapsed/State (по умолчанию
-                          использует JOBID из tools/.last_jobid)
+    status [JOBID]      — squeue + sacct, показывает Elapsed/State (по умолчанию использует JOBID из tools/.last_jobid)
     fetch  [JOBID]      — scp 05/10/15.{out,skip}, f_*.npz → data/
-    log    [JOBID]      — показать последние строки output_<JOBID>_<arrayid>.out
+    log    [JOBID]      — показать последние строки output_<JOBID>_<array_id>.out
                           для всех трёх array tasks
 
 Подключение настроено через ~/.ssh/config — алиас `kiae`.

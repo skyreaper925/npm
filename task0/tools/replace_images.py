@@ -9,7 +9,6 @@
      data/{tag}.out и процентом пропусков из data/{tag}.skip.
 
 Текстовые правки по комментариям преподавателя НЕ выполняются автоматически
-(см. docs/правки.md для готовых формулировок — вставлять руками в Word).
 
 Использование (из любой директории):
     python tools/replace_images.py
@@ -135,7 +134,7 @@ def add_auto_block(dst_path, summary, skip_data):
 
     doc = Document(str(dst_path))
     body = doc.element.body
-    ns = "{http://schemas.openxmlformats.org/wordprocessingml/2006/main}"
+    ns = "{https://schemas.openxmlformats.org/wordprocessingml/2006/main}"
 
     # Идём по прямым детям body (sectPr должен остаться последним) и ищем
     # параграф с маркером. После него всё удаляем — это наш авто-блок.

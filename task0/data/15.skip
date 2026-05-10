@@ -1,8 +1,8 @@
 u=1.5
-actual_steps=1000
+actual_steps=421
 total_pos_skipped=0
-total_korobov_pts=50021000
+total_korobov_pts=21008820
 skip_percent=0.000000
-elapsed_seconds=2794.33
-started=2026-04-30 12:41:52
-finished=2026-04-30 13:28:26
+elapsed_seconds=1438.44
+started=2026-05-10 17:01:00
+finished=2026-05-10 17:24:58

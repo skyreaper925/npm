@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Релаксация бимодального Максвелла. Считает T, T_xx, H и снимки f
+"""Релаксация Максвелла c 2 модами. Считает T, T_xx, H и снимки f
 для u ∈ {0.5, 1.0, 1.5}. На каждом шаге применяется симметризация по y, z.
 
 Хранение снимков ф.р. (комментарий #6 преподавателя):
@@ -60,11 +60,11 @@ def run(u_velocity, out_dir, seed=42):
     print(f"[u={u_velocity}] начало: {time.strftime('%Y-%m-%d %H:%M:%S')}",
           flush=True)
 
-    with open(out_path, "w", encoding="utf-8") as fout:
+    with open(out_path, "w", encoding="utf-8") as out:
         for t in range(TIME_STEPS):
             T, T_xx, H_val = compute_macro_parameters(f, xi_grid, dxi)
-            fout.write(f"{T:.6f} {T_xx:.6f} {H_val:.6f}\n")
-            fout.flush()
+            out.write(f"{T:.6f} {T_xx:.6f} {H_val:.6f}\n")
+            out.flush()
             actual_steps = t + 1
 
             if t in SNAPSHOT_STEPS:
@@ -101,15 +101,15 @@ def run(u_velocity, out_dir, seed=42):
     elapsed = time.time() - t_start_wall
     pct = 100.0 * total_pos_skipped / max(total_korobov_pts, 1)
 
-    with open(skip_path, "w", encoding="utf-8") as fskip:
-        fskip.write(f"u={u_velocity}\n")
-        fskip.write(f"actual_steps={actual_steps}\n")
-        fskip.write(f"total_pos_skipped={total_pos_skipped}\n")
-        fskip.write(f"total_korobov_pts={total_korobov_pts}\n")
-        fskip.write(f"skip_percent={pct:.6f}\n")
-        fskip.write(f"elapsed_seconds={elapsed:.2f}\n")
-        fskip.write(f"started={time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(t_start_wall))}\n")
-        fskip.write(f"finished={time.strftime('%Y-%m-%d %H:%M:%S')}\n")
+    with open(skip_path, "w", encoding="utf-8") as skip:
+        skip.write(f"u={u_velocity}\n")
+        skip.write(f"actual_steps={actual_steps}\n")
+        skip.write(f"total_pos_skipped={total_pos_skipped}\n")
+        skip.write(f"total_korobov_pts={total_korobov_pts}\n")
+        skip.write(f"skip_percent={pct:.6f}\n")
+        skip.write(f"elapsed_seconds={elapsed:.2f}\n")
+        skip.write(f"started={time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(t_start_wall))}\n")
+        skip.write(f"finished={time.strftime('%Y-%m-%d %H:%M:%S')}\n")
 
     np.savez_compressed(
         snap_path,

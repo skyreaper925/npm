@@ -38,7 +38,7 @@ def create_velocity_grid(Nx, Ny, Nz, xi_cut):
 
 def snap_collision_velocities(a, xi_grid, dxi):
     """
-    3) «Привязывает» скорости столкновения, сгенерированные рандомно, к ближайшим узлам сетки.
+    3) «Привязывает» скорости столкновения к ближайшим узлам сетки.
 
     Параметры:
     a : np.ndarray, shape (8, n)
@@ -147,6 +147,7 @@ def compute_post_collision_velocities_sem_2(a, d):
 
     return updated_a
 
+
 def find_interpolating_nodes_and_weights(a_updated, xi_grid, dxi, xi_cut):
     """
     6) находим λ_ν, λ_ν + s_ν - координаты приближающих узлов для разлётной скорости ξ', μ_ν, μ_ν - s_ν - координаты
@@ -172,12 +173,10 @@ def find_interpolating_nodes_and_weights(a_updated, xi_grid, dxi, xi_cut):
     # Возвращаем только те узлы, которые проходят фильтр
     a_updated_snapped_filtered, snapped_idx_updated_filtered = a_updated_snapped[:, mask], snapped_idx_updated[:, mask]
     a_updated_filtered = a_updated[:, mask]  # то что нужно для получения eta_center
-    eta_near = snapped_idx_updated_filtered[
-        0:3, :]  # массив ближайших точек из узлов сетки, shape(3, m) для скорости xi
-    velocity_near = a_updated_snapped_filtered[
-        0:3, :]  # массив ближайших координат из узлов сетки, shape(3, m) для скорости xi
+    eta_near = snapped_idx_updated_filtered[0:3, :]  # массив ближайших точек из узлов сетки, shape(3, m) для xi
+    velocity_near = a_updated_snapped_filtered[0:3, :]  # массив ближайших координат из узлов сетки, shape(3, m) для  xi
     eta_near1 = snapped_idx_updated_filtered[3:6, :]  # то же для скорости xi1
-    # velocity_near1 = a_updated_snapped_filtered[3:6, :]  ##то же для скорости xi1
+    velocity_near1 = a_updated_snapped_filtered[3:6, :]  #то же для скорости xi1
 
     # Б) ищем 8 узлов, которые окружают точную разлётную скорость для каждого столкновения
     m = np.shape(a_updated_snapped_filtered)[1]  # длина массива столкновений, которые мы рассматриваем
@@ -279,7 +278,7 @@ def find_interpolating_nodes_and_weights(a_updated, xi_grid, dxi, xi_cut):
             mu2[:, i] = eta_near1[:, i]
 
             candidates = np.where(E_surround[:, i] < E_0[i])[0]  # массив индексов
-            #duplicate start
+            # duplicate start
             if candidates.size == 0:
                 keep[i] = False
                 continue
@@ -308,7 +307,7 @@ def find_interpolating_nodes_and_weights(a_updated, xi_grid, dxi, xi_cut):
             tmp = candidates_velocity_filtered[:, :] - a_updated_filtered[:3, i]
             dist = np.sqrt(np.sum(tmp * tmp, axis=1))
             chosen_idx = np.argmin(dist)
-            #duplicate end
+            # duplicate end
 
             lam1[:, i] = candidate_nodes_velocity_filtered[chosen_idx]
             mu1[:, i] = candidate_nodes_velocity_filtered1[chosen_idx]

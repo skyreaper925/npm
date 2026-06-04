@@ -1,0 +1,9 @@
+skip_percent=0.000000
+n_skipped_total=0
+korobov_points_total=15706594
+actual_steps=315
+elapsed_seconds=617.62
+tau=0.02
+N=20
+xi_cut=4.8
+seed=42

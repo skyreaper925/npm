@@ -38,7 +38,7 @@ def create_velocity_grid(Nx, Ny, Nz, xi_cut):
 
 def snap_collision_velocities(a, xi_grid, dxi):
     """
-    3) «Привязывает» скорости столкновения, сгенерированные рандомно, к ближайшим узлам сетки.
+    3) «Привязывает» скорости столкновения к ближайшим узлам сетки.
 
     Параметры:
     a : np.ndarray, shape (8, n)
@@ -172,12 +172,10 @@ def find_interpolating_nodes_and_weights(a_updated, xi_grid, dxi, xi_cut):
     # Возвращаем только те узлы, которые проходят фильтр
     a_updated_snapped_filtered, snapped_idx_updated_filtered = a_updated_snapped[:, mask], snapped_idx_updated[:, mask]
     a_updated_filtered = a_updated[:, mask]  # то что нужно для получения eta_center
-    eta_near = snapped_idx_updated_filtered[
-        0:3, :]  # массив ближайших точек из узлов сетки, shape(3, m) для скорости xi
-    velocity_near = a_updated_snapped_filtered[
-        0:3, :]  # массив ближайших координат из узлов сетки, shape(3, m) для скорости xi
+    eta_near = snapped_idx_updated_filtered[0:3, :]  # массив ближайших точек из узлов сетки, shape(3, m) для xi
+    velocity_near = a_updated_snapped_filtered[0:3, :]  # массив ближайших координат из узлов сетки, shape(3, m) для xi
     eta_near1 = snapped_idx_updated_filtered[3:6, :]  # то же для скорости xi1
-    # velocity_near1 = a_updated_snapped_filtered[3:6, :]  ##то же для скорости xi1
+    velocity_near1 = a_updated_snapped_filtered[3:6, :]  #то же для скорости xi1
 
     # Б) ищем 8 узлов, которые окружают точную разлётную скорость для каждого столкновения
     m = np.shape(a_updated_snapped_filtered)[1]  # длина массива столкновений, которые мы рассматриваем
@@ -188,12 +186,13 @@ def find_interpolating_nodes_and_weights(a_updated, xi_grid, dxi, xi_cut):
     for i in range(3):  # i = 3 (x), 4 (y), 5 (z)
         eta_center1[i] = np.floor(a_updated_filtered[i + 3] / dxi[i] + 0.5 * len(xi_grid[i]) + 0.5)
 
-    shifts_surround = np.zeros((8, 3, m),
-                               dtype=int)  # 8 окружающих точек, для каждой 3 координаты скорости относительно eta_center: i, j, k:
-    nodes_surround = np.zeros((8, 3, m),
-                              dtype=int)  # 8 окружающих точек, для каждой 3 абсолютных координаты скорости (не относительно eta_center)
-    nodes_surround1 = np.zeros((8, 3, m),
-                               dtype=int)  # 8 окружающих точек, симметричных тем что в nodes_surround, для каждой 3 абсолютных координаты скорости (не относительно eta_center)
+    shifts_surround = np.zeros((8, 3, m),dtype=int)
+    # 8 окружающих точек, для каждой 3 координаты скорости относительно eta_center: i, j, k:
+    nodes_surround = np.zeros((8, 3, m),dtype=int)
+    # 8 окружающих точек, для каждой 3 абсолютных координаты скорости (не относительно eta_center)
+    nodes_surround1 = np.zeros((8, 3, m), dtype=int)
+    # 8 окружающих точек, симметричных тем что в nodes_surround, для каждой 3 абсолютных координаты скорости
+    # (не относительно eta_center)
     # все сочетания (i,j,k) ∈ {0,1}³
     shifts = [
         (0, 0, 0),
@@ -218,7 +217,7 @@ def find_interpolating_nodes_and_weights(a_updated, xi_grid, dxi, xi_cut):
         shifts_surround[v, 1, :] = sj
         shifts_surround[v, 2, :] = sk
 
-    # ограничиваем индексы, чтобы они не выходили за границы массива grid (теперь среди 8 окружающих точек могут появляться совпадающие)
+    # ограничиваем индексы, чтобы они не выходили за границы grid (теперь среди 8 точек могут появляться совпадающие)
     nodes_surround[:, 0, :] = np.clip(nodes_surround[:, 0, :], 0, len(xi_grid[0]) - 1)
     nodes_surround[:, 1, :] = np.clip(nodes_surround[:, 1, :], 0, len(xi_grid[1]) - 1)
     nodes_surround[:, 2, :] = np.clip(nodes_surround[:, 2, :], 0, len(xi_grid[2]) - 1)

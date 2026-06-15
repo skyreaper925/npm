@@ -1,0 +1,40 @@
+% !TeX root = ../thesis.tex
+% ===================== ПРИЛОЖЕНИЕ =====================
+\chapter*{Приложение А. Псевдокод алгоритма} % FIX: надо ли писать букву A? у нас же лишь одно приложение
+\addcontentsline{toc}{chapter}{Приложение А. Псевдокод алгоритма}
+
+Ниже приведён язык-независимый псевдокод одного шага по времени (комментарии~--- латиницей, чтобы не зависеть от шрифта
+моноширинного блока). % FIX: что это значит? в текст не добавлять
+
+\medskip
+\noindent\textbf{Шаг проекционного метода (интеграл столкновений):}
+{\footnotesize
+\begin{verbatim}
+for each time step:
+    refresh random shift delta of the Korobov lattice
+    for nu = 1 .. p:                  # nodes of the 8D Korobov lattice
+        recover (eps, b, xi_a, xi_b) from Korobov coordinates
+        if |xi_a| > xi_cut or |xi_b| > xi_cut: skip nu
+        theta = 2*arccos(b / b_max)   # hard-sphere model
+        g'    = rotate(xi_b - xi_a, theta, eps)
+        xi_a' = 0.5*(xi_a + xi_b) - 0.5*g'
+        xi_b' = 0.5*(xi_a + xi_b) + 0.5*g'
+        (lam, mu, s, r) = project_to_nodes(xi_a', xi_b')  # momentum + energy
+        Omega = (f[lam]*f[mu])^(1-r) * (f[lam+s]*f[mu-s])^r - f[a]*f[b]
+        df = C * Omega * |g|
+        if positivity is violated at any of the 6 nodes: skip nu
+        else: apply df to nodes (a, b, lam, mu, lam+s, mu-s)
+\end{verbatim}
+}
+
+\medskip
+\noindent\textbf{Шаг задачи переноса (расщепление Странга):}
+{\footnotesize
+\begin{verbatim}
+transport(dt/2)      # TVD scheme with MC limiter, per velocity node
+collisions(dt)       # see pseudocode above
+transport(dt/2)
+# boundary conditions: left  - incoming Maxwellian f_inf(u0)
+#                      right - specular reflection xi_x -> -xi_x
+\end{verbatim}
+}

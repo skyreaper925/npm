@@ -1,0 +1,76 @@
+% ============================================================================
+%  Выпускная квалификационная работа (бакалаврская работа)
+%  Володин М. В., ЛФИ МФТИ, 2026
+%  Сборка: pdflatex thesis.tex (дважды, для оглавления и ссылок)
+% ============================================================================
+% Некоторые файлы лежат рядом с этим .tex (пакетный менеджер MiKTeX недоступен, поэтому класс подключён локально).
+\documentclass[14pt,a4paper]{extreport}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T2A]{fontenc}
+\usepackage[russian]{babel}
+\usepackage{tempora}            % Times-подобный шрифт с поддержкой кириллицы
+
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{graphicx}
+\graphicspath{{images/}}
+\usepackage[left=30mm,right=15mm,top=20mm,bottom=20mm]{geometry}
+\usepackage{indentfirst}
+\usepackage[hidelinks]{hyperref}
+\usepackage{amsopn}
+\usepackage{amstext}
+
+\linespread{1.5}                 % межстрочный интервал 1,5
+\setlength{\parindent}{1.25cm}   % абзацный отступ 1,25 см
+\pagestyle{plain}                % номер страницы снизу по центру (стиль plain KOMA)
+\emergencystretch=3em            % последний шанс TeX вместо вылезания строк за поле (overfull)
+
+% Русские названия и разделитель «–» в подписях рисунков/таблиц
+\addto\captionsrussian{%
+  \renewcommand{\figurename}{Рисунок}%
+  \renewcommand{\tablename}{Таблица}%
+  \renewcommand{\bibname}{Список литературы}%
+  \renewcommand{\contentsname}{Содержание}%
+}
+% Подписи рисунков/таблиц: по центру, разделитель «—» (пакет caption)
+\usepackage{caption}
+\DeclareCaptionLabelSeparator{emdash}{~--- }
+\captionsetup{labelsep=emdash,justification=centering}
+
+% Нумерация уравнений/рисунков/таблиц в пределах главы
+\numberwithin{equation}{chapter}
+\numberwithin{figure}{chapter}
+\numberwithin{table}{chapter}
+
+\newcommand{\xv}{\boldsymbol{\xi}}
+\newcommand{\gv}{\mathbf{g}}
+\newcommand{\dd}{\,\mathrm{d}}
+
+\begin{document}
+
+\input{parts/titlepage}
+
+\input{parts/annotation}
+
+% ===================== СОДЕРЖАНИЕ =====================
+\tableofcontents
+
+\input{parts/notation}
+
+\input{parts/introduction}
+
+\input{parts/ch1_method}
+
+\input{parts/ch2_verification}
+
+\input{parts/ch3_transport}
+
+\input{parts/ch4_implementation}
+
+\input{parts/conclusion}
+
+\input{parts/bibliography}
+
+\input{parts/appendix}
+
+\end{document}

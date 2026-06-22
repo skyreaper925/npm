@@ -9,6 +9,8 @@
 \usepackage{tempora}
 \usepackage{amsmath, amssymb}
 \usepackage{graphicx}
+\usepackage{amsopn}
+\usepackage{amstext}
 \graphicspath{{images/}}
 
 \usetheme{Madrid}
@@ -24,7 +26,7 @@
 Научный руководитель: Цибульский В.\,Ф.}
 \institute[МФТИ]{МФТИ, Физтех-школа физики и исследований имени Ландау \\
 Кафедра моделирования ядерных процессов и технологий}
-\date{июнь 2026}
+\date{24 июня 2026}
 
 \begin{document}
 
@@ -78,8 +80,8 @@
   \[ I(\xi)=\int_0^{d}\!\!\int_0^{2\pi}\!\!\int_{-\xi_{cut}}^{+\xi_{cut}}(f'f'_1-ff_1)\,|\mathbf g|\,b\,db\,d\varepsilon\,d\xi_1 \]
   \begin{itemize}
     \item Отклик столкновения \textbf{проецируется} на узлы $\lambda,\mu$ сетки скоростей.
-    \item Импульс: $\mu=\alpha+\beta-\lambda$; энергия: вес $r_\nu$. Лог-интерполяция
-          $\Rightarrow$ положительность и $H$-теорема.
+    \item Импульс: $\mu=\alpha+\beta-\lambda$; энергия: вес $r_\nu$.
+    Лог-интерполяция $\Rightarrow$ положительность и $H$-теорема.
     \item 8-мерный интеграл считается на \textbf{сетках Коробова}: погрешность
           $O((\ln p)^8/p)$ против $1/\sqrt N$ у Монте-Карло.
   \end{itemize}
@@ -96,7 +98,7 @@
       \end{itemize}
     \end{column}
     \begin{column}{0.5\textwidth}
-      \includegraphics[width=\textwidth]{t0_T}
+      \includegraphics[width=\textwidth]{sl_t0_T}
     \end{column}
   \end{columns}
 \end{frame}
@@ -104,7 +106,7 @@
 % 7. Верификация 1 — H-функция
 \begin{frame}{Верификация 1. $H$-теорема}
   \centering
-  \includegraphics[width=0.62\textwidth]{t0_H}\\
+  \includegraphics[width=0.62\textwidth]{sl_t0_H}\\
   {\small $H$ монотонно невозрастает; скорость убывания растёт с параметром $u$.}
 \end{frame}
 
@@ -114,12 +116,12 @@
     \begin{column}{0.5\textwidth}
       \begin{itemize}\small
         \item $T_c=1$, $T_h=2$, $n_c=n_h=0{,}5$.
-        \item Равновесие $T=\dfrac{\sum_i n_iT_i}{\sum_i n_i}=1{,}5$.
+        \item Равновесие $T=\dfrac{\sum_i n_i T_i}{\sum_i n_i}=1{,}5$.
         \item Концентрации сохраняются; суммарная энтропия растёт.
       \end{itemize}
     \end{column}
     \begin{column}{0.5\textwidth}
-      \includegraphics[width=\textwidth]{t1_T}
+      \includegraphics[width=\textwidth]{sl_t1_T}
     \end{column}
   \end{columns}
 \end{frame}
@@ -127,7 +129,7 @@
 % 9. Верификация 2 — энтропия
 \begin{frame}{Верификация 2. Рост энтропии смеси}
   \centering
-  \includegraphics[width=0.6\textwidth]{t1_S}\\
+  \includegraphics[width=0.6\textwidth]{sl_t1_S}\\
   {\small Суммарная энтропия монотонно растёт ($H$-теорема); компоненты — противоположно.}
 \end{frame}
 
@@ -157,20 +159,19 @@
 % 12. Перенос — результаты
 \begin{frame}{Перенос: результаты (установившаяся УВ, $L=80$, $N_x=400$)}
   \centering
-  \includegraphics[width=0.82\textwidth]{t2_profiles}\\
-  {\small Профили $n,\,u_x,\,T,\,T_{xx}$: сжатие $n\to3$, нагрев $T\to3{,}6$,
-   кинетический «перескок» $T_{xx}$ на фронте.}
+  \includegraphics[width=\textwidth,height=0.8\textheight,keepaspectratio]{sl_t2_profiles}\\
+  {\scriptsize Профили $n,\,u_x,\,T,\,T_{xx}$: сжатие $n\to3$, нагрев $T\to3{,}6$, «перескок» $T_{xx}$ на фронте.}
 \end{frame}
 
 % 13. Перенос — фронт, ФР и проверка Гюгонио
 \begin{frame}{Перенос: фронт волны и проверка Гюгонио}
   \begin{columns}
     \begin{column}{0.52\textwidth}
-      \centering\includegraphics[width=\textwidth]{t2_front}\\
+      \centering\includegraphics[width=\textwidth]{sl_t2_front}\\
       {\small Фронт $x_c(t)$ линеен $\Rightarrow V$; \quad $n_{\max}\to3$.}
     \end{column}
     \begin{column}{0.48\textwidth}
-      \centering\includegraphics[width=\textwidth]{t2_fx}\\
+      \centering\includegraphics[width=\textwidth]{sl_t2_fx}\\
       {\small $f_x$: холодный поток $\to$ горячий послескачковый газ.}
     \end{column}
   \end{columns}
@@ -188,7 +189,7 @@
           (\(\sim\)400$\times$ к скалярному коду), хранение «четвертью» (память $\times4\dots8$).
     \item \textbf{Структурная параллелизуемость:} интеграл столкновений независим по ячейкам
           и по узлам Коробова — естественное масштабирование.
-    \item \textbf{Направление развития:} компилируемый солвер с MPI/GPU.
+    \item \textbf{Направление развития:} компилируемый солвер с MPI/GPU \@.
   \end{itemize}
 \end{frame}
 

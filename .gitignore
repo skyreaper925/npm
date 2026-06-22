@@ -1,0 +1,42 @@
+# ── LaTeX вспомогательные файлы ────────────────────────────────────────────
+*.aux
+*.toc
+*.lof
+*.lot
+*.synctex.gz
+*.synctex(busy)
+*.fls
+*.fdb_latexmk
+*.bbl
+*.blg
+*.bcf
+*.run.xml
+*.nav
+*.snm
+*.vrb
+*.log
+# hyperref .out — но task*/data/*.out это РЕАЛЬНЫЕ данные (трассы макропараметров)!
+*.out
+!task*/data/*.out
+# общая папка для aux (-aux-directory)
+auxil/
+
+# ── итоговые файлы: в out/ держим только PDF и DOCX ────────────────────────
+out/*
+!out/*.pdf
+!out/*.docx
+# устаревшие per-source out (удалены, страховка на будущее)
+diploma/*/out/
+
+# ── Python / Jupyter ───────────────────────────────────────────────────────
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+
+# ── pandoc (большой бинарь + архив, не в git) ──────────────────────────────
+diploma/tools/pandoc.exe
+diploma/tools/pandoc.zip
+diploma/tools/pandoc-3.10/
+
+# ── генерируемый плоский файл для pandoc ───────────────────────────────────
+diploma/thesis/thesis_docx.tex
